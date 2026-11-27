@@ -2,7 +2,7 @@
 
 A browser-based 3D teaching tool that shows how armwrestling works and the science behind every move and training lift.
 
-Project plan and increment tracker live in two Claude docs (Project Plan, Development Phases). Each approved increment is saved here as a numbered version tag (`v0.1`, `v0.2`, ...).
+Project plan and increment tracker live in two Claude docs (Project Plan, Development Phases). Each increment arrives as its own pull request; merging it means the increment is approved, and the version table below records it (`v0.1`, `v0.2`, ...).
 
 ## Layout
 
