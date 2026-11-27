@@ -24,7 +24,8 @@ Project plan and increment tracker live in two Claude docs (Project Plan, Develo
 | v0.4 | 0.4 | Right arm loaded on the stage at table height (elbow 0.72 m), shadows on, orbit controls: drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan |
 | v0.5 | 0.5 | Pose sliders using the Blender rig's channels and limits (shoulder X/Y/Z, elbow, forearm turn with twist bones); web and Blender agree within 0.08 mm (`tests/compare_pose_with_blender.py`). Fixes 0.4's elbow height: bones are now found by their Blender names |
 | v0.6 | 0.6 | Camera buttons: Start view, Your eyes (behind your shoulder, down the forearm), Fingertips (end-on), Side; each follows the current pose; smooth glide (off with reduced motion); double-tap or double-click resets to Start view |
-| v0.7 (in review) | 0.7 | Physics engine `web/src/physics.ts` (torque about an axis, moment arm, forearm tilt, pull across the forearm, strap modes, plate rise, strap tension, joint torque) with 58 automated tests against our notes; report in `docs/increments/0.7-physics-report.md`; tests run on every pull request |
+| v0.7 | 0.7 | Physics engine `web/src/physics.ts` (torque about an axis, moment arm, forearm tilt, pull across the forearm, strap modes, plate rise, strap tension, joint torque) with 58 automated tests against our notes; report in `docs/increments/0.7-physics-report.md`; tests run on every pull request |
+| v0.8 (in review) | 0.8 | Lift overlays on the arm (no text yet): purple twist axis (radial head to ulnar head), amber moment arm, red strap tension, orange pull across the forearm, teal torque arc. Built by `web/src/liftGeometry.ts` from the bones and the physics engine; within 0.06 mm of Blender's at elbow 90° and 60° (`tests/compare_overlays_with_blender.py`) |
 
 ### Twist rule for the web app
 
