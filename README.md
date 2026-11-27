@@ -12,6 +12,7 @@ Project plan and increment tracker live in two Claude docs (Project Plan, Develo
 | `blender/scripts/` | Blender scripts: `build_arm.py` (original arm builder), `pronation_lift.py` (lift animation + sidebar panel, works for left or right arm, with or without twist bones), `make_right_arm.py` (mirrors a left-arm file into a right arm), `add_twist_bones.py` (adds forearm twist bones and re-weights the skin) |
 | `docs/increments/` | Review images for each increment |
 | `models/` | Exported `.glb` files used by the web app |
+| `web/` | The web app: Three.js + TypeScript, built with Vite |
 
 ## Versions
 
@@ -19,7 +20,17 @@ Project plan and increment tracker live in two Claude docs (Project Plan, Develo
 | --- | --- | --- |
 | v0.1 | 0.1 | Right arm exported to `models/arm_right.glb` (skin, 18-bone rig, weights, fist start pose) |
 | v0.2 (in review) | 0.2 | Three forearm twist bones (`forearm_twist.01-03`) at 33%, 66%, 95% of the forearm, taking that share of the hand's twist; `blender/arm_twist_right.blend`; `models/arm_right.glb` now has 21 bones |
+| v0.3 (in review) | 0.3 | First web page: empty Three.js scene with floor, grid and lights, sized to any screen ([private link](https://claude.ai/artifact/4mwZcCaWTDndTWqE9m7pLi)) |
 
 ### Twist rule for the web app
 
 Pronation or supination is set on the hand bone's Y rotation. Each twist bone gets the same Y rotation times its share: `forearm_twist.01` 0.33, `.02` 0.66, `.03` 0.95. The forearm bone itself does not twist. Blender does this with drivers; glTF does not export drivers, so the app applies the rule in code.
+
+## Running the web app
+
+```bash
+cd web
+npm install
+npm run dev      # local preview at http://localhost:5173
+npm run build    # static files in web/dist, ready to host
+```
