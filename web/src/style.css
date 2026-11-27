@@ -1,0 +1,37 @@
+/* Studio look: deep neutral ground so the skin and force colours read clearly later. */
+:root {
+  color-scheme: dark;
+  --bg: #14171b;
+  --ink: #eef1f4;
+  --quiet: #9aa3ad;
+  --panel: rgba(20, 23, 27, 0.72);
+  --line: rgba(255, 255, 255, 0.12);
+}
+* { box-sizing: border-box; min-width: 0; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
+body {
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+#stage { position: fixed; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+.badge {
+  position: fixed; top: 12px; left: 12px;
+  padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--panel); backdrop-filter: blur(6px);
+}
+.badge p { margin: 0; }
+.name { font-weight: 600; font-size: 16px; }
+.build { color: var(--quiet); font-size: 13px; }
+
+.note {
+  position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+  margin: 0; padding: 8px 12px; border-radius: 999px;
+  background: var(--panel); color: var(--quiet); font-size: 13px; white-space: nowrap;
+}
+.error {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  margin: 0; padding: 24px; text-align: center; background: var(--bg);
+}
+.error[hidden] { display: none; }
