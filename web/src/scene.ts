@@ -32,12 +32,12 @@ export function createScene() {
   // Lights: soft sky/ground fill plus one key light that casts shadows.
   scene.add(new THREE.HemisphereLight(0xdfe8f2, 0x1a1d21, 1.1));
   const key = new THREE.DirectionalLight(0xffffff, 2.2);
-  key.position.set(1.2, 2.4, 1.6);
+  key.position.set(0.9, 2.6, 1.4);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
   const s = key.shadow.camera as THREE.OrthographicCamera;
-  s.left = s.bottom = -1;
-  s.right = s.top = 1;
+  s.left = s.bottom = -0.8;
+  s.right = s.top = 0.8;
   s.near = 0.5;
   s.far = 6;
   key.shadow.bias = -0.0005;

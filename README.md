@@ -20,7 +20,8 @@ Project plan and increment tracker live in two Claude docs (Project Plan, Develo
 | --- | --- | --- |
 | v0.1 | 0.1 | Right arm exported to `models/arm_right.glb` (skin, 18-bone rig, weights, fist start pose) |
 | v0.2 (in review) | 0.2 | Three forearm twist bones (`forearm_twist.01-03`) at 33%, 66%, 95% of the forearm, taking that share of the hand's twist; `blender/arm_twist_right.blend`; `models/arm_right.glb` now has 21 bones |
-| v0.3 (in review) | 0.3 | First web page: empty Three.js scene with floor, grid and lights, sized to any screen ([private link](https://claude.ai/artifact/4mwZcCaWTDndTWqE9m7pLi)) |
+| v0.3 | 0.3 | First web page: empty Three.js scene with floor, grid and lights, sized to any screen ([private link](https://claude.ai/artifact/4mwZcCaWTDndTWqE9m7pLi)) |
+| v0.4 (in review) | 0.4 | Right arm loaded on the stage at table height (elbow 0.72 m), shadows on, orbit controls: drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan |
 
 ### Twist rule for the web app
 
@@ -34,3 +35,15 @@ npm install
 npm run dev      # local preview at http://localhost:5173
 npm run build    # static files in web/dist, ready to host
 ```
+
+`npm run dev` and `npm run build` first copy `models/*.glb` into `web/public/models/` (generated, not committed).
+
+### Publishing to the claude.ai page
+
+claude.ai pages can't serve `.glb` files as page files, so the model is uploaded to the page as an asset and the build is pointed at it:
+
+```bash
+VITE_ARM_URL=/_blob/<asset id> npm run build
+```
+
+Then publish `dist/index.html` and `dist/assets/*` (not `dist/models/`). Current asset id for `arm_right.glb`: `471f1b05c6d31d46aa8c897b76c342db`. A changed model needs a new upload and a new id.
