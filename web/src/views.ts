@@ -53,8 +53,9 @@ export class Views {
   /** Where the camera goes for a view: [eye, target]. */
   place(view: ViewName): [THREE.Vector3, THREE.Vector3] {
     const p = this.points();
-    // Include the space under the hand where the strap, arrows and their labels hang (about 20 cm).
-    const below = p.wrist.clone().addScaledVector(UP, -0.2);
+    // Include the space under the hand where the strap, arrows, labels, loading pin and plate hang
+    // (strap 17 cm + pin 24 cm below the hand).
+    const below = p.wrist.clone().addScaledVector(UP, -0.43);
     const all = [p.shoulder, p.elbow, p.wrist, p.knuckle, p.tip, below];
     const box = new THREE.Box3().setFromPoints(all).expandByScalar(0.05);
     const center = box.getCenter(new THREE.Vector3());

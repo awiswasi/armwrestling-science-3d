@@ -11,6 +11,9 @@ import { Views, onDoubleTap, VIEW_LABELS, type ViewName } from './views';
 import { liftGeometry, type LiftGeometry, type LiftSetup } from './liftGeometry';
 import { LiftOverlays } from './overlays';
 import { createLabelRenderer, LiftLabels, renderReadout } from './labels';
+import { LiftProps } from './props';
+import { FIRST_FRAME, FPS, LAST_FRAME, SHOWN_RISE_IN, TURN_DEG, exaggeration, liftState } from './liftAnimation';
+import { plateRise } from './physics';
 import type { Vec3 } from './physics';
 
 /** The lift being shown: your 50 lb plate on a wrapped strap 0.75 in from the axis (our notes). */
@@ -28,6 +31,7 @@ const slidersHost = document.getElementById('sliders') as HTMLDivElement;
 const viewBar = document.getElementById('views') as HTMLElement;
 const readoutCard = document.getElementById('readout') as HTMLElement;
 const readoutBody = document.getElementById('readout-body') as HTMLElement;
+const playBtn = document.getElementById('play') as HTMLButtonElement;
 
 panelToggle.addEventListener('click', () => {
   const open = panel.dataset.open !== 'true';
@@ -68,6 +72,14 @@ function testMode(arm: LoadedArm, pose: PoseController, overlay: () => LiftGeome
   document.body.dataset.debug = JSON.stringify(out);
 }
 
+/** Test mode for the lift: ?frame=N shows frame N of the lift and reports what it shows. */
+function testFrame(apply: (frame: number) => void, report: () => Record<string, number>) {
+  const f = new URLSearchParams(location.search).get('frame');
+  if (!f) return;
+  apply(Number(f));
+  document.body.dataset.lift = JSON.stringify(report());
+}
+
 function webglAvailable(): boolean {
   try {
     const c = document.createElement('canvas');
@@ -97,6 +109,11 @@ if (!webglAvailable()) {
   controls.maxPolarAngle = Math.PI * 0.88; // a little below table height, never under the floor
   controls.target.set(0, 0.6, 0);
 
+  const lift = {
+    playing: false, t0: 0,
+    start: (_now: number) => {}, step: (_now: number) => {}, stop: () => {},
+  };
+  playBtn.addEventListener('click', () => { if (!lift.playing) lift.start(performance.now()); });
   let views: Views | null = null;
   let current: ViewName = 'start';
   let userMoved = false;
@@ -140,16 +157,60 @@ if (!webglAvailable()) {
       };
       const labels = new LiftLabels();
       scene.add(labels);
+      const props = new LiftProps();
+      scene.add(props);
+      props.attachLoop(geometryNow(), hand);
+
+      // How far the hand has turned palm-down, read from the pose (the forearm slider or the lift).
+      const palmDown = pose.side === '.R' ? -1 : 1;
+      const turnNow = () => pose.get('hand')[1] * palmDown;
       const refresh = () => {
         const g = geometryNow();
+        const turn = turnNow();
         overlays.update(g);
         labels.update(g, SETUP);
-        renderReadout(readoutBody, { elbowDeg: 180 - pose.get('forearm')[2], geometry: g, setup: SETUP });
+        // Turning palm-down winds the strap and lifts the plate; turning back unwinds it.
+        props.update(g, SHOWN_RISE_IN * (turn / TURN_DEG));
+        renderReadout(readoutBody, {
+          elbowDeg: 180 - pose.get('forearm')[2], geometry: g, setup: SETUP,
+          turnDeg: turn, realRiseIn: plateRise(turn, SETUP.momentArmIn), exaggeration: exaggeration(SETUP.momentArmIn),
+        });
       };
       readoutCard.hidden = false;
+
+      // The lift: play once from thumb-up, the same timeline as the Blender lift.
+      const showFrame = (frame: number) => {
+        pose.setHandTwist(liftState(frame, SETUP.momentArmIn).turnDeg * palmDown);
+        refresh();
+      };
+      lift.start = (now: number) => {
+        lift.t0 = now;
+        lift.playing = true;
+        sliders.setDisabled(true);
+        playBtn.disabled = true;
+        playBtn.textContent = 'Playing…';
+      };
+      lift.step = (now: number) => {
+        const frame = Math.min(LAST_FRAME, FIRST_FRAME + ((now - lift.t0) / 1000) * FPS);
+        showFrame(frame);
+        sliders.sync();
+        if (frame >= LAST_FRAME) lift.stop();
+      };
+      lift.stop = () => {
+        lift.playing = false;
+        sliders.setDisabled(false);
+        playBtn.disabled = false;
+        playBtn.textContent = '▶ Play lift';
+      };
+      playBtn.hidden = false;
+      testFrame(showFrame, () => {
+        const st = liftState(Number(new URLSearchParams(location.search).get('frame')), SETUP.momentArmIn);
+        return { turnDeg: st.turnDeg, handY: pose.get('hand')[1], realRiseIn: st.realRiseIn, shownRiseIn: st.shownRiseIn,
+          pinTop: props.pinTop() };
+      });
       testMode(arm, pose, geometryNow);
       refresh();
-      buildSliders(slidersHost, pose, rightArmJoints(), refresh);
+      const sliders = buildSliders(slidersHost, pose, rightArmJoints(), refresh, () => lift.stop());
       // Open on wide screens; on phones it starts as a collapsed bar so the arm stays visible.
       const wide = window.matchMedia('(min-width: 601px)').matches;
       panel.dataset.open = String(wide);
@@ -206,6 +267,7 @@ if (!webglAvailable()) {
   new ResizeObserver(() => { if (views && !userMoved) views.go(current, true); }).observe(stage);
 
   renderer.setAnimationLoop((now) => {
+    if (lift.playing) lift.step(now);
     views?.tick(now);
     controls.update();
     renderer.render(scene, camera);
