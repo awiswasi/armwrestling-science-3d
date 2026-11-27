@@ -10,8 +10,12 @@
   <div id="stage" aria-label="3D scene"></div>
   <header class="badge">
     <p class="name">Armwrestling Science 3D</p>
-    <p class="build">Build v0.4 · right arm</p>
+    <p class="build">Build v0.5 · pose sliders</p>
   </header>
+  <aside class="panel" id="panel" data-open="false" hidden>
+    <button class="panel-toggle" id="panel-toggle" type="button" aria-expanded="false" aria-controls="sliders">Pose sliders</button>
+    <div class="sliders" id="sliders"></div>
+  </aside>
   <p class="note" id="note">Loading…</p>
   <p class="error" id="error" hidden>This device's browser can't show 3D graphics (WebGL is off or unsupported). Try a recent Chrome, Safari or Firefox.</p>
   <script type="module" src="/src/main.ts"></script>

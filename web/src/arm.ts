@@ -36,7 +36,9 @@ export async function loadArm(
       // are wrong; never cull it.
       skinned.frustumCulled = false;
     }
-    if ((o as THREE.Bone).isBone) bones.set(o.name, o as THREE.Bone);
+    // three.js strips '.' from node names ("forearm.R" -> "forearmR"); key bones by the
+    // original Blender name, which GLTFLoader keeps in userData.name.
+    if ((o as THREE.Bone).isBone) bones.set((o.userData.name as string) || o.name, o as THREE.Bone);
     // Blender's glTF exporter adds an icosphere as the bones' display shape; hide it.
     if ((o as THREE.Mesh).isMesh && !(o as THREE.SkinnedMesh).isSkinnedMesh) o.visible = false;
   });
@@ -46,8 +48,9 @@ export async function loadArm(
 
   // Lift the model so the elbow sits at table height. Blender put it near the floor.
   const elbow = bones.get('forearm.R') ?? bones.get('forearm.L');
+  if (!elbow) throw new Error('No forearm bone found in ' + url);
   root.updateMatrixWorld(true);
-  if (elbow) {
+  {
     const p = elbow.getWorldPosition(new THREE.Vector3());
     root.position.y += ELBOW_HEIGHT - p.y;
   }

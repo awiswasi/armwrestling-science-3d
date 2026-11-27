@@ -36,3 +36,35 @@ body {
   margin: 0; padding: 24px; text-align: center; background: var(--bg);
 }
 .error[hidden] { display: none; }
+
+/* Pose sliders panel: a card on the right on wide screens, a bottom sheet on phones. */
+.panel {
+  position: fixed; top: 12px; right: 12px; width: 300px;
+  max-height: calc(100dvh - 24px); overflow: auto;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--panel); backdrop-filter: blur(6px);
+}
+.panel[hidden] { display: none; }
+.panel-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; min-height: 44px; padding: 10px 14px;
+  border: 0; background: none; color: var(--ink); font-family: inherit; font-size: 15px; font-weight: 600; line-height: 1.2; cursor: pointer; text-align: left;
+}
+.panel-toggle::after { content: "▸"; color: var(--quiet); transition: transform .15s; }
+.panel[data-open="true"] .panel-toggle::after { transform: rotate(90deg); }
+.panel-toggle:focus-visible, .reset:focus-visible, .joint input:focus-visible { outline: 2px solid #7fb2ff; outline-offset: 2px; }
+.sliders { display: none; padding: 0 14px 14px; }
+.panel[data-open="true"] .sliders { display: grid; gap: 14px; }
+.joint-head { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.joint-head output { font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+.joint input[type="range"] { width: 100%; height: 28px; margin: 4px 0 0; accent-color: #7fb2ff; }
+.channel { margin: 0; color: var(--quiet); font-size: 12px; }
+.reset {
+  min-height: 40px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06); color: var(--ink); font-family: inherit; font-size: 14px; cursor: pointer;
+}
+@media (max-width: 600px) {
+  .panel { top: auto; right: 8px; left: 8px; bottom: 8px; width: auto; max-height: 52dvh; }
+  .panel[data-open="true"] ~ .note { display: none; }
+  .note { bottom: 64px; }
+}
