@@ -1,11 +1,12 @@
 {
   "name": "armwrestling-science-3d",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "copy-models": "node scripts/copy-models.mjs",
+    "dev": "npm run copy-models && vite",
+    "build": "npm run copy-models && tsc --noEmit && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

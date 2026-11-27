@@ -27,8 +27,9 @@ body {
 
 .note {
   position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
-  margin: 0; padding: 8px 12px; border-radius: 999px;
-  background: var(--panel); color: var(--quiet); font-size: 13px; white-space: nowrap;
+  margin: 0; padding: 8px 14px; border-radius: 14px;
+  background: var(--panel); color: var(--quiet); font-size: 13px; text-align: center;
+  width: max-content; max-width: calc(100vw - 24px); text-wrap: balance;
 }
 .error {
   position: fixed; inset: 0; display: grid; place-items: center;
