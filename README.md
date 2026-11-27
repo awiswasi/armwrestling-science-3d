@@ -22,7 +22,8 @@ Project plan and increment tracker live in two Claude docs (Project Plan, Develo
 | v0.2 (in review) | 0.2 | Three forearm twist bones (`forearm_twist.01-03`) at 33%, 66%, 95% of the forearm, taking that share of the hand's twist; `blender/arm_twist_right.blend`; `models/arm_right.glb` now has 21 bones |
 | v0.3 | 0.3 | First web page: empty Three.js scene with floor, grid and lights, sized to any screen ([private link](https://claude.ai/artifact/4mwZcCaWTDndTWqE9m7pLi)) |
 | v0.4 | 0.4 | Right arm loaded on the stage at table height (elbow 0.72 m), shadows on, orbit controls: drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan |
-| v0.5 (in review) | 0.5 | Pose sliders using the Blender rig's channels and limits (shoulder X/Y/Z, elbow, forearm turn with twist bones); web and Blender agree within 0.08 mm (`tests/compare_pose_with_blender.py`). Fixes 0.4's elbow height: bones are now found by their Blender names |
+| v0.5 | 0.5 | Pose sliders using the Blender rig's channels and limits (shoulder X/Y/Z, elbow, forearm turn with twist bones); web and Blender agree within 0.08 mm (`tests/compare_pose_with_blender.py`). Fixes 0.4's elbow height: bones are now found by their Blender names |
+| v0.6 (in review) | 0.6 | Camera buttons: Start view, Your eyes (behind your shoulder, down the forearm), Fingertips (end-on), Side; each follows the current pose; smooth glide (off with reduced motion); double-tap or double-click resets to Start view |
 
 ### Twist rule for the web app
 

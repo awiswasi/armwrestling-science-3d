@@ -1,5 +1,5 @@
-// Increments 0.4-0.5: the right arm on the stage, rotate / pan / zoom by mouse or touch,
-// and test sliders that pose it with the same channels as the Blender rig.
+// Increments 0.4-0.6: the right arm on the stage, rotate / pan / zoom by mouse or touch,
+// test sliders that pose it with the same channels as the Blender rig, and camera view buttons.
 // Units are metres and +Y is up, the same as the exported arm (.glb).
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -7,6 +7,7 @@ import { createScene } from './scene';
 import { loadArm, type LoadedArm } from './arm';
 import { PoseController } from './pose';
 import { buildSliders, rightArmJoints } from './sliders';
+import { Views, onDoubleTap, VIEW_LABELS, type ViewName } from './views';
 
 // The published claude.ai page serves the model as an uploaded asset; builds elsewhere use the copy in ./models.
 const ARM_URL = import.meta.env.VITE_ARM_URL || './models/arm_right.glb';
@@ -17,6 +18,7 @@ const note = document.getElementById('note') as HTMLParagraphElement;
 const panel = document.getElementById('panel') as HTMLElement;
 const panelToggle = document.getElementById('panel-toggle') as HTMLButtonElement;
 const slidersHost = document.getElementById('sliders') as HTMLDivElement;
+const viewBar = document.getElementById('views') as HTMLElement;
 
 panelToggle.addEventListener('click', () => {
   const open = panel.dataset.open !== 'true';
@@ -59,21 +61,6 @@ function webglAvailable(): boolean {
   }
 }
 
-function frame(camera: THREE.PerspectiveCamera, controls: OrbitControls, box: THREE.Box3) {
-  const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3()).length();
-  // Distance that fits the box in the narrower of the two view angles.
-  const vFov = THREE.MathUtils.degToRad(camera.fov);
-  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
-  const dist = (size / 2) / Math.sin(Math.min(vFov, hFov) / 2) * 0.9;
-  const dir = new THREE.Vector3(0.55, 0.35, 0.75).normalize();
-  camera.position.copy(center).addScaledVector(dir, dist);
-  controls.target.copy(center);
-  controls.minDistance = dist * 0.25;
-  controls.maxDistance = dist * 3;
-  controls.update();
-}
-
 if (!webglAvailable()) {
   error.hidden = false;
 } else {
@@ -93,7 +80,9 @@ if (!webglAvailable()) {
   controls.maxPolarAngle = Math.PI * 0.88; // a little below table height, never under the floor
   controls.target.set(0, 0.6, 0);
 
-  let armBox: THREE.Box3 | null = null;
+  let views: Views | null = null;
+  let current: ViewName = 'start';
+  let userMoved = false;
   const resize = () => {
     const w = stage.clientWidth || window.innerWidth;
     const h = stage.clientHeight || window.innerHeight;
@@ -109,7 +98,6 @@ if (!webglAvailable()) {
     note.textContent = `Loading the arm… ${Math.round(f * 100)}%`;
   })
     .then((arm) => {
-      armBox = arm.box;
       // Aim the key light's shadow at the arm.
       key.target.position.copy(arm.box.getCenter(new THREE.Vector3()));
       scene.add(key.target);
@@ -121,7 +109,15 @@ if (!webglAvailable()) {
       panel.dataset.open = String(wide);
       panelToggle.setAttribute('aria-expanded', String(wide));
       panel.hidden = false;
-      frame(camera, controls, arm.box);
+      views = new Views(camera, controls, arm.bones, pose.side);
+      const r = arm.box.getBoundingSphere(new THREE.Sphere()).radius;
+      controls.minDistance = r * 0.3;
+      controls.maxDistance = r * 8;
+      const asked = new URLSearchParams(location.search).get('view') as ViewName | null;
+      current = asked && asked in VIEW_LABELS ? asked : 'start';
+      buildViewBar();
+      views.go(current, true);
+      onDoubleTap(renderer.domElement, () => { userMoved = false; select('start'); });
       note.textContent = 'Drag to rotate · pinch or scroll to zoom · two fingers or right-drag to pan';
       document.body.dataset.ready = 'arm';
     })
@@ -131,12 +127,40 @@ if (!webglAvailable()) {
       document.body.dataset.ready = 'error';
     });
 
-  // Re-frame on window shape changes only until the user moves the camera themselves.
-  let userMoved = false;
-  controls.addEventListener('start', () => { userMoved = true; });
-  new ResizeObserver(() => { if (armBox && !userMoved) frame(camera, controls, armBox); }).observe(stage);
+  function select(view: ViewName) {
+    if (!views) return;
+    current = view;
+    views.go(view);
+    for (const b of viewBar.querySelectorAll('button')) {
+      b.setAttribute('aria-pressed', String(b.dataset.view === view));
+    }
+  }
 
-  renderer.setAnimationLoop(() => {
+  function buildViewBar() {
+    viewBar.innerHTML = '';
+    for (const name of ['start', 'eyes', 'fingertips', 'side'] as ViewName[]) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.view = name;
+      b.textContent = VIEW_LABELS[name];
+      b.setAttribute('aria-pressed', String(name === current));
+      b.addEventListener('click', () => { userMoved = false; select(name); });
+      viewBar.appendChild(b);
+    }
+    viewBar.hidden = false;
+  }
+
+  // Dragging the camera ends any glide and un-highlights the view buttons.
+  controls.addEventListener('start', () => {
+    userMoved = true;
+    views?.cancel();
+    for (const b of viewBar.querySelectorAll('button')) b.setAttribute('aria-pressed', 'false');
+  });
+  // Keep the chosen view framed when the window changes shape, until the visitor moves the camera.
+  new ResizeObserver(() => { if (views && !userMoved) views.go(current, true); }).observe(stage);
+
+  renderer.setAnimationLoop((now) => {
+    views?.tick(now);
     controls.update();
     renderer.render(scene, camera);
   });
