@@ -456,9 +456,12 @@ def build(context=None):
     keys = [(KEY_FRAMES[0], 0.0), (KEY_FRAMES[1], 0.0), (KEY_FRAMES[2], 1.0),
             (KEY_FRAMES[3], 1.0), (KEY_FRAMES[4], 0.0), (KEY_FRAMES[5], 0.0)]
     pin_z0 = pin.location.z
+    # With twist bones (add_twist_bones.py) the hand carries the whole turn and the
+    # twist bones spread it along the forearm; without them, split it as before.
+    share = 0.0 if r.data.bones.get("forearm_twist.01" + FOREARM[-2:]) else FOREARM_SHARE
     for f, k in keys:
-        fpb.rotation_euler[1] = turn * k * FOREARM_SHARE
-        hpb.rotation_euler[1] = turn * k * (1 - FOREARM_SHARE)
+        fpb.rotation_euler[1] = turn * k * share
+        hpb.rotation_euler[1] = turn * k * (1 - share)
         fpb.keyframe_insert("rotation_euler", index=1, frame=f, group="Pronation")
         hpb.keyframe_insert("rotation_euler", index=1, frame=f, group="Pronation")
         pin.location.z = pin_z0 + rise * k
