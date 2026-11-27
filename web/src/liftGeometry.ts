@@ -34,6 +34,8 @@ export interface LiftGeometry {
   pullStart: Vec3; pullEnd: Vec3;
   /** Torque arc around the axis: centre, start direction, turn direction, radius, angles (rad). */
   arc: { center: Vec3; u: Vec3; v: Vec3; radius: number; from: number; to: number };
+  /** Where each label sits (increment 0.9), laid out like the Blender labels. */
+  labels: { axis: Vec3; momentArm: Vec3; tension: Vec3; pull: Vec3; torque: Vec3 };
   /** Numbers from the physics engine for this pose. */
   tiltDeg: number; pullLb: number; torqueInLb: number;
 }
@@ -68,14 +70,27 @@ export function liftGeometry({ elbow, wrist, back: backIn, side }: LiftInput, se
   const pullStart = add(armEnd, scale(lateral, 0.075));
   const pullEnd = Math.hypot(...across) > 1e-6 ? add(pullStart, scale(normalize(across), len(pullLb))) : pullStart;
 
+  const axisEnd = add(ulnarHead, scale(pax, 0.16));
+  const arcCenter = onAxis(sub(wrist, scale(axisDir, 0.035)));
+  const arcLabelAt = (100 * Math.PI) / 180;
+  const arcOut = add(scale(back, Math.cos(arcLabelAt)), scale(thumb, Math.sin(arcLabelAt)));
+
   return {
     axisStart: sub(radialHead, scale(pax, 0.06)),
-    axisEnd: add(ulnarHead, scale(pax, 0.16)),
+    axisEnd,
     armStart, armEnd, tensionStart, tensionEnd, pullStart, pullEnd,
     arc: {
-      center: onAxis(sub(wrist, scale(axisDir, 0.035))),
+      center: arcCenter,
       u: back, v: thumb, radius: 0.06,
       from: (25 * Math.PI) / 180, to: (150 * Math.PI) / 180,
+    },
+    labels: {
+      axis: add(axisEnd, add(scale(pax, 0.01), scale(UP, 0.02))),
+      momentArm: add(armEnd, add(scale(lateral, 0.02), scale(UP, 0.035))),
+      // Tension and cross-pull labels are staggered so they never sit on top of each other.
+      tension: add(tensionEnd, scale(UP, -0.018)),
+      pull: add(pullEnd, scale(UP, -0.065)),
+      torque: add(arcCenter, scale(arcOut, 0.06 + 0.03)),
     },
     tiltDeg, pullLb, torqueInLb,
   };
