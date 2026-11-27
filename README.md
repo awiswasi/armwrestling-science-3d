@@ -23,7 +23,8 @@ Project plan and increment tracker live in two Claude docs (Project Plan, Develo
 | v0.3 | 0.3 | First web page: empty Three.js scene with floor, grid and lights, sized to any screen ([private link](https://claude.ai/artifact/4mwZcCaWTDndTWqE9m7pLi)) |
 | v0.4 | 0.4 | Right arm loaded on the stage at table height (elbow 0.72 m), shadows on, orbit controls: drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan |
 | v0.5 | 0.5 | Pose sliders using the Blender rig's channels and limits (shoulder X/Y/Z, elbow, forearm turn with twist bones); web and Blender agree within 0.08 mm (`tests/compare_pose_with_blender.py`). Fixes 0.4's elbow height: bones are now found by their Blender names |
-| v0.6 (in review) | 0.6 | Camera buttons: Start view, Your eyes (behind your shoulder, down the forearm), Fingertips (end-on), Side; each follows the current pose; smooth glide (off with reduced motion); double-tap or double-click resets to Start view |
+| v0.6 | 0.6 | Camera buttons: Start view, Your eyes (behind your shoulder, down the forearm), Fingertips (end-on), Side; each follows the current pose; smooth glide (off with reduced motion); double-tap or double-click resets to Start view |
+| v0.7 (in review) | 0.7 | Physics engine `web/src/physics.ts` (torque about an axis, moment arm, forearm tilt, pull across the forearm, strap modes, plate rise, strap tension, joint torque) with 58 automated tests against our notes; report in `docs/increments/0.7-physics-report.md`; tests run on every pull request |
 
 ### Twist rule for the web app
 
@@ -36,6 +37,8 @@ cd web
 npm install
 npm run dev      # local preview at http://localhost:5173
 npm run build    # static files in web/dist, ready to host
+npm test         # physics tests (vitest)
+npm run report   # physics numbers next to our notes, as a Markdown table
 ```
 
 `npm run dev` and `npm run build` first copy `models/*.glb` into `web/public/models/` (generated, not committed).
