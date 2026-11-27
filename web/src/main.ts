@@ -8,6 +8,12 @@ import { loadArm, type LoadedArm } from './arm';
 import { PoseController } from './pose';
 import { buildSliders, rightArmJoints } from './sliders';
 import { Views, onDoubleTap, VIEW_LABELS, type ViewName } from './views';
+import { liftGeometry, type LiftGeometry, type LiftSetup } from './liftGeometry';
+import { LiftOverlays } from './overlays';
+import type { Vec3 } from './physics';
+
+/** The lift being shown: your 50 lb plate on a wrapped strap 0.75 in from the axis (our notes). */
+const SETUP: LiftSetup = { loadLb: 50, momentArmIn: 0.75 };
 
 // The published claude.ai page serves the model as an uploaded asset; builds elsewhere use the copy in ./models.
 const ARM_URL = import.meta.env.VITE_ARM_URL || './models/arm_right.glb';
@@ -31,7 +37,7 @@ panelToggle.addEventListener('click', () => {
  * and writes key bone positions, in Blender's coordinates relative to the elbow, to
  * <body data-debug>. Ordinary visitors never see it.
  */
-function testMode(arm: LoadedArm, pose: PoseController) {
+function testMode(arm: LoadedArm, pose: PoseController, overlay: () => LiftGeometry) {
   const q = new URLSearchParams(location.search).get('pose');
   if (!q) return;
   const [raise, swing, turn, elbow, pron] = q.split(',').map(Number);
@@ -49,6 +55,12 @@ function testMode(arm: LoadedArm, pose: PoseController) {
     out[n] = [w.x, -w.z, w.y].map((v) => Math.round(v * 10000) / 10000); // three (x,y,z) -> Blender (x,-z,y)
   }
   out.start_upper_arm = pose.get('upper_arm');
+  const g = overlay();
+  const toBlender = (p: Vec3) => [p[0] - origin.x, -(p[2] - origin.z), p[1] - origin.y].map((v) => Math.round(v * 10000) / 10000);
+  for (const k of ['axisStart', 'axisEnd', 'armStart', 'armEnd', 'tensionStart', 'tensionEnd', 'pullStart', 'pullEnd'] as const) {
+    out[k] = toBlender(g[k]);
+  }
+  out.tilt = [Math.round(g.tiltDeg * 100) / 100];
   document.body.dataset.debug = JSON.stringify(out);
 }
 
@@ -102,8 +114,28 @@ if (!webglAvailable()) {
       key.target.position.copy(arm.box.getCenter(new THREE.Vector3()));
       scene.add(key.target);
       const pose = new PoseController(arm.bones, arm.skinned);
-      testMode(arm, pose);
-      buildSliders(slidersHost, pose, rightArmJoints(), () => {});
+
+      // Overlays follow the elbow and shoulder but not the hand's turn: a wrapped strap keeps
+      // pulling from the side while the hand turns. So the back-of-hand direction is read once,
+      // at the start pose, in the forearm bone's own frame (the forearm bone itself never twists).
+      const forearm = arm.bones.get('forearm' + pose.side)!;
+      const hand = arm.bones.get('hand' + pose.side)!;
+      const fq = () => forearm.getWorldQuaternion(new THREE.Quaternion());
+      const backLocal = new THREE.Vector3().setFromMatrixColumn(hand.matrixWorld, 2).normalize()
+        .applyQuaternion(fq().invert());
+      const overlays = new LiftOverlays();
+      scene.add(overlays);
+      const geometryNow = (): LiftGeometry => {
+        arm.root.updateMatrixWorld(true);
+        const e = forearm.getWorldPosition(new THREE.Vector3());
+        const w = hand.getWorldPosition(new THREE.Vector3());
+        const b = backLocal.clone().applyQuaternion(fq());
+        return liftGeometry({ elbow: e.toArray() as Vec3, wrist: w.toArray() as Vec3, back: b.toArray() as Vec3, side: pose.side }, SETUP);
+      };
+      const refresh = () => overlays.update(geometryNow());
+      testMode(arm, pose, geometryNow);
+      refresh();
+      buildSliders(slidersHost, pose, rightArmJoints(), refresh);
       // Open on wide screens; on phones it starts as a collapsed bar so the arm stays visible.
       const wide = window.matchMedia('(min-width: 601px)').matches;
       panel.dataset.open = String(wide);
