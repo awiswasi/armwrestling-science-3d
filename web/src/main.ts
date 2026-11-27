@@ -10,6 +10,7 @@ import { buildSliders, rightArmJoints } from './sliders';
 import { Views, onDoubleTap, VIEW_LABELS, type ViewName } from './views';
 import { liftGeometry, type LiftGeometry, type LiftSetup } from './liftGeometry';
 import { LiftOverlays } from './overlays';
+import { createLabelRenderer, LiftLabels, renderReadout } from './labels';
 import type { Vec3 } from './physics';
 
 /** The lift being shown: your 50 lb plate on a wrapped strap 0.75 in from the axis (our notes). */
@@ -25,6 +26,8 @@ const panel = document.getElementById('panel') as HTMLElement;
 const panelToggle = document.getElementById('panel-toggle') as HTMLButtonElement;
 const slidersHost = document.getElementById('sliders') as HTMLDivElement;
 const viewBar = document.getElementById('views') as HTMLElement;
+const readoutCard = document.getElementById('readout') as HTMLElement;
+const readoutBody = document.getElementById('readout-body') as HTMLElement;
 
 panelToggle.addEventListener('click', () => {
   const open = panel.dataset.open !== 'true';
@@ -61,6 +64,7 @@ function testMode(arm: LoadedArm, pose: PoseController, overlay: () => LiftGeome
     out[k] = toBlender(g[k]);
   }
   out.tilt = [Math.round(g.tiltDeg * 100) / 100];
+  out.readout = [g.tiltDeg, g.pullLb, g.torqueInLb].map((v) => Math.round(v * 1000) / 1000);
   document.body.dataset.debug = JSON.stringify(out);
 }
 
@@ -83,6 +87,7 @@ if (!webglAvailable()) {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   stage.appendChild(renderer.domElement);
+  const labelRenderer = createLabelRenderer(stage);
 
   const { scene, camera, key } = createScene();
 
@@ -99,6 +104,7 @@ if (!webglAvailable()) {
     const w = stage.clientWidth || window.innerWidth;
     const h = stage.clientHeight || window.innerHeight;
     renderer.setSize(w, h, false);
+    labelRenderer.setSize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   };
@@ -132,7 +138,15 @@ if (!webglAvailable()) {
         const b = backLocal.clone().applyQuaternion(fq());
         return liftGeometry({ elbow: e.toArray() as Vec3, wrist: w.toArray() as Vec3, back: b.toArray() as Vec3, side: pose.side }, SETUP);
       };
-      const refresh = () => overlays.update(geometryNow());
+      const labels = new LiftLabels();
+      scene.add(labels);
+      const refresh = () => {
+        const g = geometryNow();
+        overlays.update(g);
+        labels.update(g, SETUP);
+        renderReadout(readoutBody, { elbowDeg: 180 - pose.get('forearm')[2], geometry: g, setup: SETUP });
+      };
+      readoutCard.hidden = false;
       testMode(arm, pose, geometryNow);
       refresh();
       buildSliders(slidersHost, pose, rightArmJoints(), refresh);
@@ -195,5 +209,6 @@ if (!webglAvailable()) {
     views?.tick(now);
     controls.update();
     renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
   });
 }
