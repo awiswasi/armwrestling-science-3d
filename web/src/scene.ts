@@ -34,7 +34,9 @@ export function createScene() {
   const key = new THREE.DirectionalLight(0xffffff, 2.2);
   key.position.set(0.9, 2.6, 1.4);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  // Smaller shadow map on phones: a quarter of the work, and the arm is small on screen there.
+  const small = typeof window !== 'undefined' && window.matchMedia('(max-width: 600px)').matches;
+  key.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
   const s = key.shadow.camera as THREE.OrthographicCamera;
   s.left = s.bottom = -0.8;
   s.right = s.top = 0.8;

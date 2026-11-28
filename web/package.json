@@ -1,21 +1,26 @@
 {
   "name": "armwrestling-science-3d",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.11.0",
   "type": "module",
   "scripts": {
-    "copy-models": "node scripts/copy-models.mjs",
+    "copy-models": "node scripts/compress-models.mjs && node scripts/copy-models.mjs",
     "dev": "npm run copy-models && vite",
     "build": "npm run copy-models && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "report": "vite-node scripts/physics-report.ts"
+    "report": "vite-node scripts/physics-report.ts",
+    "check-models": "node scripts/check-compression.mjs"
   },
   "dependencies": {
     "three": "0.170.0"
   },
   "devDependencies": {
+    "@gltf-transform/core": "4.1.1",
+    "@gltf-transform/extensions": "4.1.1",
+    "@gltf-transform/functions": "4.1.1",
     "@types/three": "0.170.0",
+    "meshoptimizer": "0.22.0",
     "typescript": "5.6.3",
     "vite": "5.4.11",
     "vitest": "2.1.8"

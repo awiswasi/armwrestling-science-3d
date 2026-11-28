@@ -2,6 +2,7 @@
 // The model comes from Blender with its fist + thumb-up start pose already set on the bones.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 
 /** Height of the elbow above the floor, in metres: about table height. */
 export const ELBOW_HEIGHT = 0.72;
@@ -19,7 +20,9 @@ export async function loadArm(
   scene: THREE.Scene,
   onProgress?: (fraction: number) => void,
 ): Promise<LoadedArm> {
-  const gltf = await new GLTFLoader().loadAsync(url, (e) => {
+  // The web model is Meshopt-compressed (web/scripts/compress-models.mjs); this decodes it.
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+  const gltf = await loader.loadAsync(url, (e) => {
     if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total);
   });
   const root = gltf.scene;

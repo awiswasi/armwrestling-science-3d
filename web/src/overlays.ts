@@ -77,7 +77,14 @@ export class LiftOverlays extends THREE.Group {
     this.add(this.axis, this.arm, this.armDot, this.tension, this.pull, this.torque, this.torqueHead);
   }
 
+  private lastKey = '';
+
   update(g: LiftGeometry) {
+    // Skip the work (and the new tube geometry) when nothing that shapes the drawing has moved,
+    // for example while the lift plays: the drawing follows the elbow, not the hand's turn.
+    const key = [g.axisStart, g.axisEnd, g.armEnd, g.pullEnd, g.tensionEnd].flat().map((v) => v.toFixed(5)).join(',');
+    if (key === this.lastKey) return;
+    this.lastKey = key;
     this.axis.between(v3(g.axisStart), v3(g.axisEnd));
     this.arm.between(v3(g.armStart), v3(g.armEnd));
     this.armDot.position.copy(v3(g.armStart));

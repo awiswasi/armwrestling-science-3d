@@ -110,15 +110,16 @@ export class Views {
     };
   }
 
-  /** Call once per frame. */
-  tick(now: number) {
-    if (!this.anim) return;
+  /** Call once per frame. Returns true while the camera is gliding. */
+  tick(now: number): boolean {
+    if (!this.anim) return false;
     const a = this.anim;
     const k = Math.min(1, (now - a.t0) / a.ms);
     const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; // ease in-out
     this.camera.position.lerpVectors(a.from, a.to, e);
     this.controls.target.lerpVectors(a.fromT, a.toT, e);
     if (k >= 1) this.anim = null;
+    return true;
   }
 
   /** Stop a glide if the visitor grabs the camera. */

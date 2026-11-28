@@ -19,7 +19,7 @@ Project plan and increment tracker live in two Claude docs (Project Plan, Develo
 | Version | Increment | What changed |
 | --- | --- | --- |
 | v0.1 | 0.1 | Right arm exported to `models/arm_right.glb` (skin, 18-bone rig, weights, fist start pose) |
-| v0.2 (in review) | 0.2 | Three forearm twist bones (`forearm_twist.01-03`) at 33%, 66%, 95% of the forearm, taking that share of the hand's twist; `blender/arm_twist_right.blend`; `models/arm_right.glb` now has 21 bones |
+| v0.2 | 0.2 | Three forearm twist bones (`forearm_twist.01-03`) at 33%, 66%, 95% of the forearm, taking that share of the hand's twist; `blender/arm_twist_right.blend`; `models/arm_right.glb` now has 21 bones |
 | v0.3 | 0.3 | First web page: empty Three.js scene with floor, grid and lights, sized to any screen ([private link](https://claude.ai/artifact/4mwZcCaWTDndTWqE9m7pLi)) |
 | v0.4 | 0.4 | Right arm loaded on the stage at table height (elbow 0.72 m), shadows on, orbit controls: drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan |
 | v0.5 | 0.5 | Pose sliders using the Blender rig's channels and limits (shoulder X/Y/Z, elbow, forearm turn with twist bones); web and Blender agree within 0.08 mm (`tests/compare_pose_with_blender.py`). Fixes 0.4's elbow height: bones are now found by their Blender names |
@@ -27,7 +27,8 @@ Project plan and increment tracker live in two Claude docs (Project Plan, Develo
 | v0.7 | 0.7 | Physics engine `web/src/physics.ts` (torque about an axis, moment arm, forearm tilt, pull across the forearm, strap modes, plate rise, strap tension, joint torque) with 58 automated tests against our notes; report in `docs/increments/0.7-physics-report.md`; tests run on every pull request |
 | v0.8 | 0.8 | Lift overlays on the arm (no text yet): purple twist axis (radial head to ulnar head), amber moment arm, red strap tension, orange pull across the forearm, teal torque arc. Built by `web/src/liftGeometry.ts` from the bones and the physics engine; within 0.06 mm of Blender's at elbow 90° and 60° (`tests/compare_overlays_with_blender.py`) |
 | v0.9 | 0.9 | Labels on the drawings (twist axis, moment arm, tension, pull across forearm, torque) and a Live numbers card (elbow angle, forearm tilt, load, pull across forearm, moment arm, torque in in·lb and lb·ft). Matches Blender's readouts at elbow 90° and 60° (37.5 in·lb; 43.35 lb and 32.51 in·lb). Views now frame the arrows too |
-| v0.10 (in review) | 0.10 | Strap loop (rides on the hand), strap, loading pin and plate, and the pronation lift with a Play lift button: same timeline as the Blender lift (4.5 s: hold, turn 80° palm-down, hold, lower, hold). Plate drawn rising 2 in at the top (×1.9 the real 1.05 in, so it's easy to see); every number stays real. Matches Blender frame by frame (`tests/compare_lift_with_blender.py`) |
+| v0.10 | 0.10 | Strap loop (rides on the hand), strap, loading pin and plate, and the pronation lift with a Play lift button: same timeline as the Blender lift (4.5 s: hold, turn 80° palm-down, hold, lower, hold). Plate drawn rising 2 in at the top (×1.9 the real 1.05 in, so it's easy to see); every number stays real. Matches Blender frame by frame (`tests/compare_lift_with_blender.py`) |
+| v0.11 (in review) | 0.11 | Faster on phones: the arm model is compressed from 5.87 MB to 0.69 MB (quantized and Meshopt-packed by `web/scripts/compress-models.mjs`; skin moves at most 0.37 mm, checked by `web/scripts/check-compression.mjs`). The page only redraws when something moves, phones use a smaller shadow map, and the drawings and numbers card are only rebuilt when they change. Closes Phase 0: see `docs/phase-0-gate.md` |
 
 ### Twist rule for the web app
 
@@ -54,4 +55,6 @@ claude.ai pages can't serve `.glb` files as page files, so the model is uploaded
 VITE_ARM_URL=/_blob/<asset id> npm run build
 ```
 
-Then publish `dist/index.html` and `dist/assets/*` (not `dist/models/`). Current asset id for `arm_right.glb`: `471f1b05c6d31d46aa8c897b76c342db`. A changed model needs a new upload and a new id.
+Then publish `dist/index.html` and `dist/assets/*` (not `dist/models/`). Current asset id for `arm_right.min.glb` (the compressed model; `npm run build` makes it): `0c7a4f98f1262e48cbf1c19dba8767f6`. A changed model needs a new upload and a new id.
+
+Headless screenshot tools only capture a canvas that keeps drawing, and the app only redraws when something moves, so add `?continuous` to the address when taking screenshots (for example `index.html?frame=43&continuous`).
