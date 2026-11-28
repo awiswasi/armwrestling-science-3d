@@ -87,6 +87,10 @@ export function renderReadout(host: HTMLElement, { elbowDeg, geometry: g, setup,
     ['Hand turned', `${fmt(turnDeg)}° palm-down`],
     ['Plate lifted', `${fmt(realRiseIn, 2)} in`],
   ];
+  // Only touch the page when a shown value changes (the lift calls this every frame).
+  const signature = rows.map((r) => r.join('=')).join('|') + exaggeration.toFixed(2);
+  if (host.dataset.signature === signature) return;
+  host.dataset.signature = signature;
   host.replaceChildren(
     ...rows.map(([k, v]) => {
       const row = document.createElement('div');

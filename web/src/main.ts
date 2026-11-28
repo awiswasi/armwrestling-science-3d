@@ -1,5 +1,5 @@
-// Increments 0.4-0.6: the right arm on the stage, rotate / pan / zoom by mouse or touch,
-// test sliders that pose it with the same channels as the Blender rig, and camera view buttons.
+// The right arm on the stage (0.4), pose sliders (0.5), camera views (0.6), physics overlays and
+// numbers (0.7-0.9), the pronation lift (0.10). 0.11: compressed model and render-on-demand.
 // Units are metres and +Y is up, the same as the exported arm (.glb).
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -20,7 +20,7 @@ import type { Vec3 } from './physics';
 const SETUP: LiftSetup = { loadLb: 50, momentArmIn: 0.75 };
 
 // The published claude.ai page serves the model as an uploaded asset; builds elsewhere use the copy in ./models.
-const ARM_URL = import.meta.env.VITE_ARM_URL || './models/arm_right.glb';
+const ARM_URL = import.meta.env.VITE_ARM_URL || './models/arm_right.min.glb';
 
 const stage = document.getElementById('stage') as HTMLDivElement;
 const error = document.getElementById('error') as HTMLParagraphElement;
@@ -165,6 +165,7 @@ if (!webglAvailable()) {
       const palmDown = pose.side === '.R' ? -1 : 1;
       const turnNow = () => pose.get('hand')[1] * palmDown;
       const refresh = () => {
+        window.__invalidate?.();
         const g = geometryNow();
         const turn = turnNow();
         overlays.update(g);
@@ -266,10 +267,21 @@ if (!webglAvailable()) {
   // Keep the chosen view framed when the window changes shape, until the visitor moves the camera.
   new ResizeObserver(() => { if (views && !userMoved) views.go(current, true); }).observe(stage);
 
+  // Draw only when something on screen changed: saves battery on phones, where a still scene
+  // would otherwise be redrawn 60 times a second. ?continuous redraws every frame anyway: headless
+  // screenshot tools only capture a canvas that keeps drawing.
+  const continuous = new URLSearchParams(location.search).has('continuous');
+  let dirty = true;
+  const invalidate = () => { dirty = true; };
+  controls.addEventListener('change', invalidate);
+  new ResizeObserver(invalidate).observe(stage);
+  window.__invalidate = invalidate;
   renderer.setAnimationLoop((now) => {
-    if (lift.playing) lift.step(now);
-    views?.tick(now);
-    controls.update();
+    if (lift.playing) { lift.step(now); dirty = true; }
+    if (views?.tick(now)) dirty = true;
+    if (controls.update()) dirty = true;
+    if (!dirty && !continuous) return;
+    dirty = false;
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
   });
