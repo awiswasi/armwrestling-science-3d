@@ -41,7 +41,15 @@ export function rightArmJoints(): Joint[] {
   ];
 }
 
-export function buildSliders(host: HTMLElement, pose: PoseController, joints: Joint[], onChange: () => void) {
+export interface SliderPanel {
+  /** Re-read every slider from the pose (after something else moved the arm). */
+  sync(): void;
+  /** Lock the sliders, for example while the lift plays. */
+  setDisabled(d: boolean): void;
+}
+
+export function buildSliders(host: HTMLElement, pose: PoseController, joints: Joint[], onChange: () => void,
+  onReset?: () => void): SliderPanel {
   host.innerHTML = '';
   const rows = joints.map((j) => {
     const row = document.createElement('div');
@@ -76,6 +84,7 @@ export function buildSliders(host: HTMLElement, pose: PoseController, joints: Jo
   reset.className = 'reset';
   reset.textContent = 'Back to start pose';
   reset.addEventListener('click', () => {
+    onReset?.();
     for (const { j, input, show } of rows) {
       j.set(pose, j.start);
       input.value = String(j.start);
@@ -84,4 +93,17 @@ export function buildSliders(host: HTMLElement, pose: PoseController, joints: Jo
     onChange();
   });
   host.appendChild(reset);
+
+  return {
+    sync() {
+      for (const { j, input, show } of rows) {
+        const v = j.get(pose);
+        input.value = String(Math.round(v));
+        show(v);
+      }
+    },
+    setDisabled(d: boolean) {
+      for (const { input } of rows) input.disabled = d;
+    },
+  };
 }

@@ -121,3 +121,22 @@ body {
   .rd-row { font-size: 12px; padding: 1px 0; }
   .tag { font-size: 11px; padding: 2px 6px; }
 }
+
+/* Play lift: the one primary action, bottom centre above the hint. */
+.play {
+  position: fixed; bottom: 52px; left: 50%; transform: translateX(-50%);
+  min-height: 48px; padding: 12px 24px; border: 0; border-radius: 999px;
+  background: #3d7bea; color: #fff; font-family: inherit; font-size: 16px; font-weight: 600;
+  cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.play[hidden] { display: none; }
+.play:hover { background: #4a88f5; }
+.play:disabled { background: #2b4f8f; cursor: default; }
+.play:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.rd-note { margin: 6px 0 0; color: var(--quiet); font-size: 11.5px; line-height: 1.35; }
+.joint input:disabled { opacity: 0.5; }
+@media (max-width: 600px) {
+  .play { bottom: 124px; min-height: 44px; padding: 10px 20px; font-size: 15px; }
+  .note { bottom: 64px; }
+  .rd-note { font-size: 11px; }
+}

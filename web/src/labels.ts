@@ -66,10 +66,15 @@ export interface Readout {
   elbowDeg: number;
   geometry: LiftGeometry;
   setup: LiftSetup;
+  /** How far the hand has turned palm-down (degrees). */
+  turnDeg: number;
+  /** Real plate rise for that turn (inches) and how much bigger the drawing shows it. */
+  realRiseIn: number;
+  exaggeration: number;
 }
 
 /** The live numbers card. Every value is read from the physics engine's result for this pose. */
-export function renderReadout(host: HTMLElement, { elbowDeg, geometry: g, setup }: Readout) {
+export function renderReadout(host: HTMLElement, { elbowDeg, geometry: g, setup, turnDeg, realRiseIn, exaggeration }: Readout) {
   const tilt = Math.abs(g.tiltDeg) < 0.5 ? 'level' : g.tiltDeg > 0 ? 'up' : 'down';
   const rows: [string, string][] = [
     ['Elbow angle', `${fmt(elbowDeg)}°`],
@@ -79,6 +84,8 @@ export function renderReadout(host: HTMLElement, { elbowDeg, geometry: g, setup 
     ['Moment arm', `${setup.momentArmIn.toFixed(2)} in`],
     ['Pronation torque', `${fmt(g.torqueInLb, 1)} in·lb`],
     ['', `${fmt(inlbToLbft(g.torqueInLb), 2)} lb·ft`],
+    ['Hand turned', `${fmt(turnDeg)}° palm-down`],
+    ['Plate lifted', `${fmt(realRiseIn, 2)} in`],
   ];
   host.replaceChildren(
     ...rows.map(([k, v]) => {
@@ -92,5 +99,9 @@ export function renderReadout(host: HTMLElement, { elbowDeg, geometry: g, setup 
       return row;
     }),
   );
+  const note = document.createElement('p');
+  note.className = 'rd-note';
+  note.textContent = `Plate motion drawn ×${fmt(exaggeration, 1)} so it's easy to see.`;
+  host.appendChild(note);
   host.dataset.torque = g.torqueInLb.toFixed(2);
 }

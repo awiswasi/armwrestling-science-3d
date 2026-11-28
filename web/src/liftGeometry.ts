@@ -34,6 +34,10 @@ export interface LiftGeometry {
   pullStart: Vec3; pullEnd: Vec3;
   /** Torque arc around the axis: centre, start direction, turn direction, radius, angles (rad). */
   arc: { center: Vec3; u: Vec3; v: Vec3; radius: number; from: number; to: number };
+  /** Where the strap leaves the back of the hand (just above the end of the moment arm). */
+  strapTop: Vec3;
+  /** The strap loop round the hand: centre and axes (x = back of hand, y = along the forearm). */
+  loop: { center: Vec3; x: Vec3; y: Vec3; z: Vec3; halfThick: number; halfWidth: number };
   /** Where each label sits (increment 0.9), laid out like the Blender labels. */
   labels: { axis: Vec3; momentArm: Vec3; tension: Vec3; pull: Vec3; torque: Vec3 };
   /** Numbers from the physics engine for this pose. */
@@ -83,6 +87,11 @@ export function liftGeometry({ elbow, wrist, back: backIn, side }: LiftInput, se
       center: arcCenter,
       u: back, v: thumb, radius: 0.06,
       from: (25 * Math.PI) / 180, to: (150 * Math.PI) / 180,
+    },
+    strapTop: add(armEnd, scale(UP, 0.012)),
+    loop: {
+      center: strapAt, x: back, y: axisDir, z: normalize(cross(back, axisDir)),
+      halfThick: setup.momentArmIn * IN, halfWidth: 0.044,
     },
     labels: {
       axis: add(axisEnd, add(scale(pax, 0.01), scale(UP, 0.02))),
